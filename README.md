@@ -30,5 +30,5 @@ Our algorithm returns the corresponding next hop port of each IP, it also return
 
 ## Workloads Generation
 In our experiments, we focus on the longest prefix matching with IPv4. We use IPv4 FIB tables downloaded from 5 routers provided by RIPE in August 9 2013(https://www.ripe.net/), and assign each FIB table with a specific IP packet traffic containing approximately 5 million IP packets. To validate the robustness and efficiency of our proposed IP lookup algorithm, we generated two different IP packet traffic patterns:
- random traffic: randomly generated IP addresses.
- prefix-based traffic: IP addresses generated obey the prefix distribution of the corresponding FIB table.
+1.random traffic: randomly generated IP addresses.
+2.prefix-based traffic: IP addresses generated obey the prefix distribution of the corresponding FIB table.
