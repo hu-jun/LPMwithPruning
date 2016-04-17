@@ -2,10 +2,10 @@
 
 ## Introduction
 
-A **sketch** is a probabilistic data structure that is used to record frequencies of different items in a multi-set.
-Various types of sketches have been proposed in the literature and applied in a variety of fields, such as natural language processing, compressed sensing, network traffic analysis, and distributed data sets.
-While several variants of sketches have been proposed in the past, the existing sketches cannot improve the accuracy of **the CM sketch** while keeping the update ability.
-Here, we propose a new sketch, ***the MC sketch***, that has significantly higher accuracy compared to prior art, while keeping the query speed and update speed unchanged.
+Nowadays, the FIB size of backbone routers takes on an explosive increase, making IP lookup a challenging issue. 
+An effective solution is to use Bloom filters. 
+However, Bloom filters have false positives, making Bloom filter based algorithms suffer from query speed degradation with FIB explosion.
+To address this issue, we propose a novel algorithm — **Longest Prefix Matching with Pruning**, which prune unneeded prefix probes incurred by false positive.
 
 
 ## Building
