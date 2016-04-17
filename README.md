@@ -12,15 +12,15 @@ Here, we propose a new sketch, ***the MC sketch***, that has significantly highe
 
 	$ sh build.sh
     
-There is an example in main.cpp, which shows the basic usage of the Longest Prefix Matching with Pruning. For example, using sh build.sh, we can get an executable file named LPMwithPruning in ./bin.
+There is an example in main.cpp, which shows the basic usage of the Longest Prefix Matching with Pruning. For example, using **sh build.sh**, we can get an executable file named **LPMwithPruning** in ./bin.
 
 ## Usage
 
 	$ ./bin/LPMwithPruning
 
-Runing this executable file, the results will output to the folder ./result, the files FIBIP_* are results of FIB traffic, the files RandomIP_* are results of random traffic.
+Runing this executable file, the results will output to the folder ./result, the files as FIBIP_*.txt are results of FIB traffic, the files as RandomIP_*.txt are results of random traffic.
 If you want to adjust the routing tables and the test traffic, you need to reference the data format of files in ./data4test/fibIp and./data4test/randomIP . 
-Note: you may need to provide a default forward routing (such as "111.111.111.1/0 26") for each routing table file, so that if the longest prefix matching length is 0,it still can find a next hop for the ip, otherwise results are not accurate of provisions. 
+****Note:**** you may need to provide a default forward routing (such as "111.111.111.1/0 26") for each routing table file, so that if the longest prefix matching length is 0,it still can find a next hop for the ip, otherwise results are not accurate of provisions. 
 
 
 ## Workloads Generation
