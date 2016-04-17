@@ -24,6 +24,11 @@ If you want to use different routing tables or IP packet traffics for test, plea
 ***Note:*** If an IP lookup doesn't mathch any prefix, we should return a default next-hop for that IP.
 So if there dosen't exist any record like `*/0 [default_value]` in FIB, you should add such next-hop record for prefix `*/0` with a default next-hop value `[default_value]` as `*/0 [default_value]` to that FIB file manualy. 
 
+In this example,input includes part A(a file path of the fib, a file path of automatic generation of IP packet traffic, and a pivot level number specified by user),part B(a file path of the fib, a file path of prefix-based traffic traffic, and a pivot level number specified by user).On the one hand,part A is used to test random traffic,on the other hand,part B is used to test prefix-based traffic. You can modify input parameters in main.cpp and then rebuild the program by using command sh build.sh.
+
+Our algorithm returns the corresponding next hop port of each IP, it also returns the real detection times count of all IP trafics, the real detection refers to the query in FIB table to find the longest matching prefix.
 
 ## Workloads Generation
-...
+In our experiments, we focus on the longest prefix matching with IPv4. We use IPv4 FIB tables downloaded from 5 routers provided by RIPE in August 9 2013(https://www.ripe.net/), and assign each FIB table with a specific IP packet traffic containing approximately 5 million IP packets. To validate the robustness and efficiency of our proposed IP lookup algorithm, we generated two different IP packet traffic patterns:
+ random traffic: randomly generated IP addresses.
+ prefix-based traffic: IP addresses generated obey the prefix distribution of the corresponding FIB table.
