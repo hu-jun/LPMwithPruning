@@ -11,12 +11,12 @@ int main()
 	string randomIp_route_table_file = "../data4test/randomIP/route_table.tr";
 	string randomIp_query_file = "../data4test/randomIP/random_flow.tr";
 
-    randomIpTest(randomIp_route_table_file, randomIp_query_file);
+    randomIpTest(randomIp_route_table_file, randomIp_query_file, 24);
 
 	string fibIp_route_table_file = "../data4test/fibIp/route_table.tr";
 	string fibIp_query_file = "../data4test/fibIp/fib_flow.tr";
 
-    fibIpTest(fibIp_route_table_file, fibIp_query_file);     //fib ip test
+    fibIpTest(fibIp_route_table_file, fibIp_query_file, 24);     //fib ip test
 
     return 0;
 }
