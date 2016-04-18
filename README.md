@@ -23,7 +23,7 @@ We also packet IP packet traffic in `./data4test/fib_flow.tr`.
 Given those two input files, we can execute `./bin/LPMwithPruning`, and it will store IP lookup results into `./result/result.txt`.
 During IP lookup process, we ales count the prefix probe times for each IP in prefix-next hop storage sub system which manage the FIB and handle prefix query for next-hop value.
 For each IP address in `./data4test/fib_flow.tr`, after IP lookup, the program store a record of three items: the next-hop value, longest matching prefix and the probe times in `./result/result.txt`.
-To make the program work flexibly, you can change input files for FIB, IP packet traffic and vary the pivot level or number of hash function for Bloom filter in main.cpp and then rebuild the program using command `sh build.sh`.
+To make the program work flexibly, you can change input files for FIB, IP packet traffic, or vary the pivot level, the number of hash function for Bloom filter in main.cpp, and then rebuild the program using command `sh build.sh`.
 
 ***Note:*** If an IP lookup doesn't match any prefix, we should return a default next-hop for that IP.
 So if there doesn't exist any record like `0.0.0.0/0 [default_value]` in FIB, you should add such next-hop record for prefix `0.0.0.0/0` with a default next-hop value `[default_value]` as `0.0.0.0/0 [default_value]` to that FIB file manually.
