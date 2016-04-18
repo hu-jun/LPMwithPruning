@@ -62,7 +62,7 @@ void Trie::createNewNode(Node* &node)
     node->lchild = NULL;
     node->rchild = NULL;
     node->prefix = (char*)malloc(1*sizeof(char));
-	node->prefix[0] = '\0'; 
+	node->prefix[0] = '\0';
     node->nodeLevel = 0;
     node->next_hop = EMPTYHOP;
 
@@ -135,7 +135,10 @@ unsigned int Trie::buildTrieFromFile(string FileName, Node * root)
 		fin >> Prefix >> iNextHop;
 
         if(Prefix.empty())
+		{
+			cout<<"empty-->   "<<FileName<<endl;
             continue;
+		}
 
 		int iLen = -1;
         char * sPrefix = ipToLongThenToChar(Prefix, iLen);
@@ -194,11 +197,10 @@ unsigned int Trie::buildTrieFromFile(string FileName, Node * root)
 		current->next_hop = iNextHop;
 
 		free(sPrefix);
-		//printf("Prefix = %s,  iLen = %d, iNextHop = %d \n",Prefix.c_str(),iLen,iNextHop);
+//		printf("Prefix = %s,  iLen = %d, iNextHop = %d \n",Prefix.c_str(),iLen,iNextHop);
 
 	}
 	fin.close();
-	printf("buildTrieFromFile\n");
 	return 0;
 }
 
@@ -573,7 +575,7 @@ int Trie::queryNextHopAtLevelNum(const string &ip, int levelNum)
     return EMPTYHOP;
 }
 
-int Trie::queryNextHopByBFFromLevel1ToLevel2(const string &ip, int levelNumFrom, int levelNumTo, int& queryCount)
+int Trie::queryNextHopByBFFromLevel1ToLevel2(const string &ip, int levelNumFrom, int levelNumTo, int& queryCount, int& matchLength)
 {
     if(levelNumFrom > 32)
     {
@@ -633,6 +635,8 @@ int Trie::queryNextHopByBFFromLevel1ToLevel2(const string &ip, int levelNumFrom,
                 hit_count[i]++;
 
                 free(ipstr);
+
+                matchLength = i;
                 return result;
             }
         }
@@ -644,12 +648,12 @@ int Trie::queryNextHopByBFFromLevel1ToLevel2(const string &ip, int levelNumFrom,
 }
 
 
-int Trie::queryNextHopByBFFromLevelNum(const string &ip, int levelNum, int& queryCount)
+int Trie::queryNextHopByBFFromLevelNum(const string &ip, int levelNum, int& queryCount, int& matchLength)
 {
-    return queryNextHopByBFFromLevel1ToLevel2(ip, levelNum, 0, queryCount);
+    return queryNextHopByBFFromLevel1ToLevel2(ip, levelNum, 0, queryCount,matchLength);
 }
 
-int Trie::queryNextHopByBFPivotLevel(const string &ip, int pivotLevelNum, int& queryCount)
+int Trie::queryNextHopByBFPivotLevel(const string &ip, int pivotLevelNum, int& queryCount, int& matchLength)
 {
     if(pivotLevelNum > 31)
     {
@@ -675,7 +679,7 @@ int Trie::queryNextHopByBFPivotLevel(const string &ip, int pivotLevelNum, int& q
     int bfQueryEmptyResult = bloomFilter[BFCOUNT -1]->query((unsigned char *)ipstr, strlen(ipstr));
     if(0 == bfQueryEmptyResult)
     {
-        result = queryNextHopByBFFromLevel1ToLevel2(ip, pivotLevelNum, 0, queryCount);
+        result = queryNextHopByBFFromLevel1ToLevel2(ip, pivotLevelNum, 0, queryCount, matchLength);
 
         free(ipstr);
         return result;
@@ -686,15 +690,15 @@ int Trie::queryNextHopByBFPivotLevel(const string &ip, int pivotLevelNum, int& q
         int bfQuerySolidResult = bloomFilter[pivotLevelNum]->query((unsigned char *)ipstr, strlen(ipstr));
         if(0 == bfQuerySolidResult)
         {
-            result = queryNextHopByBFFromLevel1ToLevel2(ip, LEVELCOUNT -1, pivotLevelNum +1, queryCount);
+            result = queryNextHopByBFFromLevel1ToLevel2(ip, LEVELCOUNT -1, pivotLevelNum +1, queryCount,matchLength);
             if(EMPTYHOP == result)
             {
-                result = queryNextHopByBFFromLevel1ToLevel2(ip, pivotLevelNum - 1, 0, queryCount);
+                result = queryNextHopByBFFromLevel1ToLevel2(ip, pivotLevelNum - 1, 0, queryCount,matchLength);
             }
         }
         else
         {
-            result = queryNextHopByBFFromLevel1ToLevel2(ip, LEVELCOUNT -1, 0, queryCount);
+            result = queryNextHopByBFFromLevel1ToLevel2(ip, LEVELCOUNT -1, 0, queryCount,matchLength);
         }
 
         free(ipstr);

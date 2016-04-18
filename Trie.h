@@ -36,7 +36,7 @@ public:
     Node* rootNode;                 //root node of Trie
     unsigned int allNodeCount;      //to count all the nodes in Trie tree, including empty node
     unsigned int solidNodeCount;    //to count all the solid nodes in Trie tree
-	
+
 	string route_table_file;       //Routing table file
 	string query_file;				//The file to query
 
@@ -104,13 +104,13 @@ public:
     int queryNextHopAtLevelNum(const string &ip, int levelNum);
 
     //use bloom filters to query next-hop from 'levelNumFrom' level to 'levelNumTo' level. 'queryCount' is the count of probe at maps
-    int queryNextHopByBFFromLevel1ToLevel2(const string &ip, int levelNumFrom, int levelNumTo, int& queryCount);
+    int queryNextHopByBFFromLevel1ToLevel2(const string &ip, int levelNumFrom, int levelNumTo, int& queryCount, int& matchLength);
 
     //use bloom filters to query next-hop from 'levelNum' level to 0th level. 'queryCount' is the count of probe at maps
-    int queryNextHopByBFFromLevelNum(const string &ip, int levelNum, int& queryCount);
+    int queryNextHopByBFFromLevelNum(const string &ip, int levelNum, int& queryCount, int& matchLength);
 
     //Longest Prefix Matching with Pruning
-    int queryNextHopByBFPivotLevel(const string &ip, int pivotLevelNum, int& queryCount);
+    int queryNextHopByBFPivotLevel(const string &ip, int pivotLevelNum, int& queryCount, int& matchLength);
 
 private:
     //if ip is 255.255.1.1 and levelNum is 24,return string like 255.255.1.1/24

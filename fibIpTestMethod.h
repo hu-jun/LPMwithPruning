@@ -6,319 +6,100 @@
 #include <fstream>
 
 
-void fibIpTest(string route_table_file, string query_file, int pivotlevel)
+void fibIpTest(string route_table_file, string query_file, int pivotlevel, int hashcount)
 {
 	printf("\n\n algorithm starts...\n\n");
 
-	ofstream PL_probeNum("../result/FibIP_PL_probeNum.txt");
+	ofstream resultFile("./result/result.txt");
+	resultFile<<"ip\t"<<"next-hip\t"<<"longest matching prefix length\t"<<"probe times"<<endl;
 
-    if(PL_probeNum.is_open())
-    {
-        PL_probeNum << "bfHashCount"<<"\t"<< "pivot_level_num"<<"\t"<<"probeNum\n";
-    }else{
-		cout << "read PL_probeNum.txt error\n";
-	}
 
-    ofstream methods_compare("../result/FibIP_methods_compare.txt");
-    if(methods_compare.is_open())
-    {
-        methods_compare << "bfHashCount"<<"\t"<< "pivot_level_num"<<"\t"<<"dirctly probe count"<<"\t"<<"PBF probe probe"<<"\t"<<"Pruning probe count\n";
-    }else{
-		cout << "read methods_compare error\n";
-	}
+	Trie trie = Trie(pivotlevel, hashcount, route_table_file, query_file);
 
-    ofstream BF_count_change("../result/FibIP_BF_count_change.txt");
-    if(BF_count_change.is_open())
-    {
-        BF_count_change << "bfHashCount"<<"\t"<< "pivot_level_num"<<"\t"<<"the count of solid nodes before pivot"<<"\t"<<"the total length of bloom filters for solid nodes before pivot"<<"\t"<<"the count of solid nodes after pivot"<<"\t"
-        <<"the total length of bloom filters for solid nodes after pivot"<<"\t"<<"the count of empty nodes"<<"\t"<<"the length of bloom filter for empty nodes"<<endl;
-    }
+    trie.buildTrieFromFile(trie.route_table_file, trie.rootNode);
 
-    ofstream BF_count_at_every_level("../result/FibIP_BF_count_at_every_level.txt");
-    if(BF_count_at_every_level.is_open())
-    {
-        BF_count_at_every_level<< "bfHashCount"<<"\t"<<"pivot_level_num\t";
-        for(int i = 0; i < LEVELCOUNT; i++)
+    trie.getNodesCounts();
+    cout<<"before pivot---->allCount: "<<trie.allNodeCount<<"  solidCount: "<<trie.solidNodeCount<<endl;
+
+
+    string filename_query = trie.query_file;
+
+
+    cout<<"begin pivotLevel"<<endl<<endl<<endl<<endl;
+    trie.pivotLevel(trie.rootNode, trie.pivotLevelNum);
+
+    trie.getNodesCounts();
+    cout<<"after pivot---->allCount: "<<trie.allNodeCount<<"  solidCount: "<<trie.solidNodeCount<<endl;
+
+    cout<<"resetThenBuildMapsAndBloomFilters start"<<endl;
+    trie.resetThenBuildMapsAndBloomFilters(trie.rootNode, trie.unodMap, LEVELCOUNT ,trie.bloomFilter, BFCOUNT, trie.pivotLevelNum);
+    cout<<"resetThenBuildMapsAndBloomFilters end"<<endl;
+
+
+
+    int queryCount = 0;
+    int emptyCount = 0;
+
+
+    ifstream fin(filename_query.c_str());
+    trie.reset_hit_and_probe_count();
+    
+    cout<<"\n\n\nrunning.";
+	
+	int tempCount = 0;	
+
+
+    while (!fin.eof()) {
+
+		tempCount++;
+		if(0==tempCount%1000)
+		{
+			cout<<".";
+		}
+
+
+        string Prefix;
+        //iNextHop = 0;
+        fin >> Prefix;
+
+        if(Prefix.empty())
+            continue;
+
+        int endIndex = Prefix.find_last_of("/");
+        string ipQueryStr = Prefix.substr(0, endIndex);
+
+        int temp = queryCount;
+
+        int matchLength = 0;
+
+        int resultPort = trie.queryNextHopByBFPivotLevel(ipQueryStr, trie.pivotLevelNum, queryCount,matchLength);
+
+        if(EMPTYHOP == resultPort)
         {
-            BF_count_at_every_level <<i<<"th ceng\t";
+            emptyCount++;
         }
-        BF_count_at_every_level<<"emptyCount"<<endl;
-    }
 
-    ofstream hit_count_at_every_level("../result/FibIP_hit_count_at_every_level.txt");
-    if(hit_count_at_every_level.is_open())
+        int probeTimes = queryCount - temp;
+
+        resultFile<<ipQueryStr<<"\t"<<resultPort<<"\t"<<matchLength<<"\t"<<probeTimes<<endl;
+
+    }
+    fin.close();
+
+    cout<<"\n\n\npivotLevelNum is "<< trie.pivotLevelNum<<" Bloom Filter hash function is " <<hashcount << "  queryCount: " << queryCount<<"  emptyCount3 is "<<emptyCount<< endl;
+
+
+    cout<<"\n\n----------------query finished------------------------end---------"<<endl<<endl<<endl;
+
+    if(0 != emptyCount)
     {
-        hit_count_at_every_level<< "bfHashCount"<<"\t"<<"pivot_level_num\t";
-        for(int i = 0; i < LEVELCOUNT; i++)
-        {
-            hit_count_at_every_level <<i<<"th ceng\t";
-        }
-        hit_count_at_every_level<<endl;
+        cout<<"\n\n############# Attention please:  the result is not correct, ##########"<<endl;
+        cout<<"############# because you have not defined a default next-hop in FIB file ####"<<endl;
+        cout<<"############# you should add line as '1.0.1.0/0 26' in FIB file ########"<<endl<<endl<<endl;
     }
 
-    ofstream probe_count_at_every_level("../result/FibIP_probe_count_at_every_level.txt");
-    if(probe_count_at_every_level.is_open())
-    {
-        probe_count_at_every_level<< "bfHashCount"<<"\t"<<"pivot_level_num\t";
-        for(int i = 0; i < LEVELCOUNT; i++)
-        {
-            probe_count_at_every_level <<i<<"th ceng\t";
-        }
-        probe_count_at_every_level<<endl;
-    }
-
-
-    bool flag_first_methed = true;
-    bool flag_second_methed = true;
-    bool flag_third_methed = true;
-
-
-    int queryCount1 = 0;
-    int emptyCount1 = 0;
-
-
-    int queryCount2 = 0;
-    int emptyCount2 = 0;
-
-
-    int queryCount3 = 0;
-    int emptyCount3 = 0;
-
-
-    int levelFrom = LEVELCOUNT - 1;
-
-
-    for(unsigned bfhashcount = 2;bfhashcount <= 16; bfhashcount++)
-    {
-
-        cout<<">>>>>>>>>>>>>>>>>>>>>>>>>>>>> bfhashcount is "<<bfhashcount<<endl<<endl<<endl;
-
-
-		Trie trie = Trie(pivotlevel, bfhashcount, route_table_file, query_file);
-		trie.buildTrieFromFile(trie.route_table_file, trie.rootNode);
-
-		trie.getNodesCounts();
-		cout<<"allCount: "<<trie.allNodeCount<<"  solidCount: "<<trie.solidNodeCount<<endl;
-
-
-		cout<<"resetThenBuildMapsAndBloomFilters start"<<endl;
-		trie.resetThenBuildMapsAndBloomFilters(trie.rootNode, trie.unodMap, LEVELCOUNT ,trie.bloomFilter, BFCOUNT, 0);
-		cout<<"resetThenBuildMapsAndBloomFilters end"<<endl;
-
-
-
-
-		//unsigned int iNextHop;
-
-		string filename_query = trie.query_file;
-
-
-		queryCount1 = 0;
-		emptyCount1 = 0;
-		if(flag_first_methed)
-		{
-			ifstream fin1(filename_query.c_str());
-			while (!fin1.eof()) {
-				string Prefix;
-				//iNextHop = 0;
-				fin1 >> Prefix;
-
-				if(Prefix.empty())
-					continue;
-
-				int endIndex = Prefix.find_last_of("/");
-				string ipQueryStr = Prefix.substr(0, endIndex);
-
-				int result = trie.queryNextHopFromLevelNum(ipQueryStr, levelFrom, queryCount1);
-
-				if(EMPTYHOP == result)
-				{
-					//cout<<ipQueryStr<<" next hop is empty"<<endl;
-					emptyCount1++;
-				}
-
-			}
-			fin1.close();
-
-			cout<<"query by levelFrom "<< levelFrom << "  queryCount1: " << queryCount1<<" emptyCount1 is " << emptyCount1<< endl;
-		}
-
-		methods_compare <<trie.bf_hash_count<<"\t"<< trie.pivotLevelNum << "\t";
-		methods_compare << queryCount1 << "\t";
-
-		unsigned int tempCount = 0;
-		unsigned int tempBFSolidCount = 0;
-
-		BF_count_at_every_level<<trie.bf_hash_count<<"\t"<<trie.pivotLevelNum<<"\t";
-		for(int temp=0; temp < BFCOUNT - 1; temp++)
-		{
-			tempCount += trie.elementCount[temp];
-
-			tempBFSolidCount += trie.bf_hash_count/Ln2 * trie.elementCount[temp];
-
-			BF_count_at_every_level<<trie.elementCount[temp] << "\t";
-		}
-
-		BF_count_at_every_level << endl;
-
-		BF_count_change <<trie.bf_hash_count<<"\t"<< trie.pivotLevelNum << "\t";
-		BF_count_change << tempCount << "\t";
-		BF_count_change << tempBFSolidCount << "\t";
-
-		tempCount = 0;
-		tempBFSolidCount = 0;
-		trie.reset_hit_and_probe_count();
-
-		cout<<"\n\n----------------first--method------------------------end-----"<<endl;
-
-
-		queryCount2 = 0;
-		emptyCount2 = 0;
-		if(flag_second_methed)
-		{
-			ifstream fin2(filename_query.c_str());
-			while (!fin2.eof()) {
-				string Prefix;
-				//iNextHop = 0;
-				fin2 >> Prefix;
-
-				if(Prefix.empty())
-					continue;
-
-				int endIndex = Prefix.find_last_of("/");
-				string ipQueryStr = Prefix.substr(0, endIndex);
-
-				int result = trie.queryNextHopByBFFromLevelNum(ipQueryStr, levelFrom, queryCount2);
-
-				if(EMPTYHOP == result)
-				{
-					//cout<<ipQueryStr<<" next hop is empty"<<endl;
-					emptyCount2++;
-				}
-			}
-			fin2.close();
-
-			cout<<"Query by bloom filter levelFrom "<< levelFrom  << "  queryCount2: " << queryCount2 <<"  emptyCount2 is " <<emptyCount2<< endl;
-		}
-
-
-
-		methods_compare << queryCount2 << "\t";
-
-
-		hit_count_at_every_level<<trie.bf_hash_count<<"\t"<<trie.pivotLevelNum<<"\t";
-		for(int i = 0; i < LEVELCOUNT; i++)
-		{
-			hit_count_at_every_level << trie.hit_count[i] << "\t";
-		}
-		hit_count_at_every_level << endl;
-
-
-		probe_count_at_every_level<<trie.bf_hash_count<<"\t"<<trie.pivotLevelNum<<"\t";
-		for(int i = 0; i < LEVELCOUNT; i++)
-		{
-			probe_count_at_every_level << trie.probe_count[i] << "\t";
-		}
-		probe_count_at_every_level << endl;
-
-
-		cout<<"\n\n----------------second--method------------------------end------"<<endl;
-
-		cout<<"begin pivotLevel"<<endl;
-		trie.pivotLevel(trie.rootNode, trie.pivotLevelNum);
-
-		trie.getNodesCounts();
-		cout<<"allCount: "<<trie.allNodeCount<<"  solidCount: "<<trie.solidNodeCount<<endl;
-
-		cout<<"resetThenBuildMapsAndBloomFilters start"<<endl;
-		trie.resetThenBuildMapsAndBloomFilters(trie.rootNode, trie.unodMap, LEVELCOUNT ,trie.bloomFilter, BFCOUNT, trie.pivotLevelNum);
-		cout<<"resetThenBuildMapsAndBloomFilters end"<<endl;
-
-
-
-		queryCount3 = 0;
-		emptyCount3 = 0;
-
-		if(flag_third_methed)
-		{
-			ifstream fin3(filename_query.c_str());
-			trie.reset_hit_and_probe_count();
-
-			while (!fin3.eof()) {
-				string Prefix;
-				//iNextHop = 0;
-				fin3 >> Prefix;
-
-				if(Prefix.empty())
-					continue;
-
-				int endIndex = Prefix.find_last_of("/");
-				string ipQueryStr = Prefix.substr(0, endIndex);
-
-
-
-				int result = trie.queryNextHopByBFPivotLevel(ipQueryStr, trie.pivotLevelNum, queryCount3);
-
-				if(EMPTYHOP == result)
-				{
-					//cout<<ipQueryStr<<" next hop is empty"<<endl;
-					emptyCount3++;
-				}
-			}
-			fin3.close();
-		}
-		cout<<"query by PivotLevel, trie.pivotLevelNum is "<< trie.pivotLevelNum << "  queryCount3: " << queryCount3<<"  emptyCount3 is "<<emptyCount3<< endl;
-
-
-
-		hit_count_at_every_level<<trie.bf_hash_count<<"\t"<<trie.pivotLevelNum<<"\t";
-		for(int i = 0; i < LEVELCOUNT; i++)
-		{
-			hit_count_at_every_level << trie.hit_count[i] << "\t";
-		}
-		hit_count_at_every_level << endl;
-
-
-		probe_count_at_every_level<<trie.bf_hash_count<<"\t"<<trie.pivotLevelNum<<"\t";
-		for(int i = 0; i < LEVELCOUNT; i++)
-		{
-			probe_count_at_every_level << trie.probe_count[i] << "\t";
-		}
-		probe_count_at_every_level << endl;
-
-
-		PL_probeNum<<trie.bf_hash_count<<"\t"<<trie.pivotLevelNum<<"\t"<<queryCount3<<endl;
-		methods_compare << queryCount3 << endl;
-
-		BF_count_at_every_level<<trie.bf_hash_count<<"\t"<<trie.pivotLevelNum<<"\t";
-		for(int temp=0; temp < BFCOUNT - 1; temp++)
-		{
-			tempCount += trie.elementCount[temp];
-			tempBFSolidCount += trie.bf_hash_count/Ln2 * trie.elementCount[temp];
-
-			 BF_count_at_every_level<<trie.elementCount[temp] << "\t";
-		}
-
-		BF_count_change << tempCount << "\t";
-		BF_count_change << tempBFSolidCount << "\t";
-
-		BF_count_change << trie.elementCount[BFCOUNT - 1] << "\t";
-		BF_count_at_every_level << trie.elementCount[BFCOUNT - 1] << endl;
-
-		unsigned int tempBFEmptyCount = trie.elementCount[BFCOUNT - 1] * trie.bf_hash_count/Ln2;
-
-		BF_count_change << tempBFEmptyCount << endl;
-
-		cout<<"\n\n----------------third--method------------------------end---------"<<endl;
-
-		trie.trieDestroy(trie.rootNode);
-
-    }
-
-
-    PL_probeNum.close();
-    methods_compare.close();
-    BF_count_change.close();
+    resultFile.close();
+    trie.trieDestroy(trie.rootNode);
 
 }
 
