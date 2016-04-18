@@ -26,7 +26,7 @@ For each IP address in `./data4test/fib_flow.tr`, after IP lookup, the program s
 To make the progrem work flexiblly, you can change input files for FIB, IP packet traffic and vary the pivot level or number of hash function for Bloom filter in main.cpp and then rebuild the program using command `sh build.sh`.
 
 ***Note:*** If an IP lookup doesn't mathch any prefix, we should return a default next-hop for that IP.
-So if there dosen't exist any record like `0.0.0.0/0 [default_value]` in FIB, you should add such next-hop record for prefix `0.0.0.0/0` with a default next-hop value `[default_value]` as `*/0 [default_value]` to that FIB file manualy. 
+So if there dosen't exist any record like `0.0.0.0/0 [default_value]` in FIB, you should add such next-hop record for prefix `0.0.0.0/0` with a default next-hop value `[default_value]` as `0.0.0.0/0 [default_value]` to that FIB file manualy. 
 
 ## Getting FIB 
 Maybe you should need some real FIBs for test, you can download real FIBs freely form from [RIPE](https://www.ripe.net/).
